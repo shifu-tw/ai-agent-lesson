@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Agent 家教課</title>
+<style>
+:root{
+  --bg:#0e0e12;--s1:#16161b;--s2:#1d1d23;--s3:#242430;
+  --bd:#2a2a35;--bd2:#3d3d4a;
+  --t:#eeeef0;--t2:#9d9daa;--t3:#5c5c6b;
+  --ac:#d97757;--ac2:#e8956f;--acbg:rgba(217,119,87,.06);
+  --g:#4ade80;--gbg:rgba(74,222,128,.06);
+  --b:#60a5fa;--bbg:rgba(96,165,250,.06);
+  --p:#a78bfa;--pbg:rgba(167,139,250,.06);
+  --y:#fbbf24;--ybg:rgba(251,191,36,.06);
+  --r:#f87171;
+  --f:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mn:'SF Mono','Fira Code','Cascadia Code',monospace;
+  --rad:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--f);background:var(--bg);color:var(--t);-webkit-font-smoothing:antialiased;overflow:hidden;height:100vh}
+
+/* === Slide === */
+.deck{position:relative;width:100vw;height:100vh}
+.slide{
+  position:absolute;top:0;left:0;width:100%;height:calc(100% - 44px);
+  display:flex;flex-direction:column;justify-content:center;
+  padding:32px clamp(32px,8vw,140px);
+  opacity:0;pointer-events:none;transition:opacity .3s;overflow-y:auto;
+}
+.slide.active{opacity:1;pointer-events:auto}
+.slide-c{align-items:center;text-align:center}
+
+/* === HUD === */
+.hud{position:fixed;bottom:0;left:0;right:0;height:44px;display:flex;align-items:center;gap:14px;padding:0 20px;background:rgba(14,14,18,.92);backdrop-filter:blur(16px);border-top:1px solid var(--bd);z-index:200;font-size:11px;color:var(--t3)}
+.hud-n{font-variant-numeric:tabular-nums;min-width:56px;font-family:var(--mn)}
+.hud-bw{flex:1;height:3px;background:var(--bd);border-radius:2px}
+.hud-b{height:100%;background:var(--ac);border-radius:2px;transition:width .3s}
+.hud-k span{display:inline-block;padding:1px 5px;margin:0 1px;background:var(--s1);border:1px solid var(--bd);border-radius:3px;font-family:var(--mn);font-size:9px}
+.pn{display:none;position:fixed;bottom:44px;left:0;right:0;background:rgba(18,18,24,.95);backdrop-filter:blur(12px);border-top:1px solid var(--ac);padding:10px 20px;font-size:12px;color:var(--ac2);z-index:199;max-height:100px;overflow-y:auto}
+.pn.show{display:block}
+
+/* === Type === */
+h1{font-size:clamp(30px,4.2vw,48px);font-weight:700;line-height:1.12;letter-spacing:-.03em;margin-bottom:16px}
+h2{font-size:clamp(23px,3vw,34px);font-weight:700;line-height:1.18;letter-spacing:-.02em;margin-bottom:12px}
+h3{font-size:15px;font-weight:600;margin:14px 0 8px;color:var(--t)}
+h3:first-child{margin-top:0}
+p{font-size:16px;line-height:1.7;color:var(--t2);max-width:660px;margin-bottom:10px}
+p:last-child{margin-bottom:0}
+p strong{color:var(--t);font-weight:600}
+.sub{font-size:17px;color:var(--t2);margin-top:6px;font-weight:400}
+.ac{color:var(--ac)}.g{color:var(--g)}.b{color:var(--b)}.p{color:var(--p)}.dm{color:var(--t3)}
+.sm{font-size:13px}.xs{font-size:11px}
+.big{font-size:clamp(36px,5.5vw,62px);font-weight:700;line-height:1.08;letter-spacing:-.04em}
+
+/* === Tag === */
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:5px;margin-bottom:10px}
+.tag-do{background:rgba(217,119,87,.1);color:var(--ac)}
+.tag-y{background:rgba(96,165,250,.1);color:var(--b)}
+.tag-dm{background:rgba(74,222,128,.1);color:var(--g)}
+.tag-k{background:rgba(251,191,36,.1);color:var(--y)}
+.tag-p{background:rgba(167,139,250,.1);color:var(--p)}
+.tag-i{font-size:14px;line-height:1}
+
+/* === Layout === */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0;max-width:720px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:10px 0;max-width:720px}
+.row{display:flex;gap:20px;align-items:flex-start;margin:10px 0}.row>*{flex:1}
+
+/* === Card === */
+.cd{background:var(--s1);border:1px solid var(--bd);border-radius:var(--rad);padding:14px 16px;transition:border-color .15s}
+.cd:hover{border-color:var(--bd2)}
+.cd-i{font-size:22px;margin-bottom:8px;display:block}
+.cd-l{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px}
+.cd p{font-size:13px;margin:0;line-height:1.55}
+
+/* === Callout === */
+.wb{border-left:3px solid var(--ac);padding:10px 16px;margin:10px 0;max-width:660px;background:var(--acbg);border-radius:0 var(--rad) var(--rad) 0}
+.wb p{font-size:14px;margin:0;color:var(--t)}
+.ib{border-left:3px solid var(--b);padding:10px 16px;margin:10px 0;max-width:660px;background:var(--bbg);border-radius:0 var(--rad) var(--rad) 0}
+.ib p{font-size:14px;margin:0;color:var(--t)}
+.gb{border-left:3px solid var(--g);padding:10px 16px;margin:10px 0;max-width:660px;background:var(--gbg);border-radius:0 var(--rad) var(--rad) 0}
+.gb p{font-size:14px;margin:0;color:var(--t)}
+
+/* === Code === */
+.code{background:var(--s1);border:1px solid var(--bd);border-radius:8px;padding:12px 16px;margin:8px 0;font-family:var(--mn);font-size:12px;line-height:1.6;color:var(--t2);white-space:pre;overflow-x:auto;max-width:720px}
+.code .c{color:var(--t3)}.code .h{color:var(--ac2)}.code .s{color:var(--g)}
+
+/* === Flow === */
+.fl{display:flex;align-items:center;gap:8px;margin:10px 0;flex-wrap:wrap}
+.fl-s{padding:6px 12px;background:var(--s2);border:1px solid var(--bd);border-radius:7px;font-size:12px;font-weight:500}
+.fl-a{color:var(--t3);font-size:13px}
+
+/* === List === */
+ul{list-style:none;padding:0;margin:6px 0;max-width:660px}
+li{padding:4px 0;font-size:15px;color:var(--t2);display:flex;align-items:flex-start;gap:10px;line-height:1.6}
+li::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--ac);flex-shrink:0;margin-top:10px}
+li strong{color:var(--t)}
+
+/* === Table === */
+table{border-collapse:collapse;font-size:13px;margin:8px 0;max-width:720px;width:100%}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--bd)}
+th{color:var(--t);font-weight:600;font-size:12px;background:var(--s1)}
+td{color:var(--t2)}
+
+/* === VS === */
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:10px 0;max-width:700px}
+.vs-l,.vs-r{padding:14px;border-radius:var(--rad)}
+.vs-l{background:rgba(248,113,113,.03);border:1px solid rgba(248,113,113,.1)}
+.vs-r{background:var(--gbg);border:1px solid rgba(74,222,128,.12)}
+.vs-m{display:flex;align-items:center;padding:0 10px;color:var(--t3);font-size:14px;font-weight:700}
+.vs-l .cd-l{color:var(--r)}.vs-r .cd-l{color:var(--g)}
+.vs-l p,.vs-r p{font-size:13px;margin:0}
+
+/* === Circles === */
+.circles{width:180px;aspect-ratio:1;position:relative;flex-shrink:0;margin:8px 0}
+.rn{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.r3{width:100%;height:100%;top:0;left:0;background:var(--pbg);border:1px solid rgba(167,139,250,.12)}
+.r2{width:66%;height:66%;top:17%;left:17%;background:var(--bbg);border:1px solid rgba(96,165,250,.12)}
+.r1{width:34%;height:34%;top:33%;left:33%;background:var(--acbg);border:2px solid var(--ac)}
+.rn span{font-size:10px;font-weight:600;position:absolute;white-space:nowrap}
+.r3 span{color:var(--p);top:6px;left:50%;transform:translateX(-50%)}
+.r2 span{color:var(--b);top:4px;left:50%;transform:translateX(-50%)}
+.r1 span{color:var(--ac);position:static;font-size:10px}
+
+/* === Folder tree diagram === */
+.tree{background:var(--s1);border:1px solid var(--bd);border-radius:var(--rad);padding:14px 18px;margin:8px 0;font-family:var(--mn);font-size:11px;line-height:1.7;color:var(--t2);white-space:pre;overflow-x:auto;max-width:720px}
+.tree .hi{color:var(--ac2)}.tree .c{color:var(--t3)}.tree .s{color:var(--g)}.tree .b{color:var(--b)}
+
+/* === Checklist === */
+.ck{list-style:none;padding:0;margin:6px 0;max-width:660px}
+.ck li{padding:4px 0;font-size:13px;color:var(--t2);display:flex;gap:8px}
+.ck li::before{content:'';width:14px;height:14px;border-radius:3px;border:1.5px solid var(--bd2);flex-shrink:0;margin-top:2px;background:none}
+
+/* === Icon (CSS-drawn) === */
+.ico{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;font-size:15px;flex-shrink:0;margin-right:4px}
+.ico-ac{background:var(--acbg);color:var(--ac)}
+.ico-b{background:var(--bbg);color:var(--b)}
+.ico-g{background:var(--gbg);color:var(--g)}
+.ico-p{background:var(--pbg);color:var(--p)}
+.ico-y{background:var(--ybg);color:var(--y)}
+
+@media(max-width:768px){.slide{padding:24px 16px}.g2,.g3{grid-template-columns:1fr}.vs{grid-template-columns:1fr}.vs-m{display:none}.row{flex-direction:column}.hud-k{display:none}}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+<!-- ========== 00 封面 ========== -->
+<div class="slide slide-c" data-s="0">
+  <div>
+    <div style="font-size:12px;color:var(--ac);font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px">Private Lesson</div>
+    <div class="big">打造你的<br>AI 夥伴</div>
+    <div class="sub">從 Context 管理到自主進化的完整框架</div>
+  </div>
+</div>
+
+<!-- ========== 01 環境安裝 ========== -->
+<div class="slide" data-s="1" data-notes="第一件事就貼 Homebrew 安裝指令，背景跑。如果 Joey 課前已裝好就跳過。Homebrew 會自動拉 Xcode CLT，整個 15-20 分鐘。趁它跑的時候講概念。">
+  <span class="tag tag-do"><span class="tag-i">&#9881;</span> 先跑這個</span>
+  <h2>環境設定</h2>
+  <p>先啟動安裝（背景跑），我們邊裝邊講。</p>
+  <div class="code"><span class="c"># 第一步：裝 Homebrew（會自動裝 Xcode CLT，最久）</span>
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</div>
+  <p>等 Homebrew 好了之後，裝這四個工具：</p>
+  <div class="g2">
+    <div class="cd"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span class="ico ico-b">&#9733;</span><div class="cd-l" style="color:var(--b);margin:0">gh — GitHub CLI</div></div><p>版本控制 + 備份。讓 Agent 幫你建 repo、commit、push。</p></div>
+    <div class="cd"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span class="ico ico-g">&#9993;</span><div class="cd-l" style="color:var(--g);margin:0">gws — Google Workspace</div></div><p>讀信、行事曆、Drive、Sheets。一個工具打通 Google。</p></div>
+  </div>
+  <div class="g2">
+    <div class="cd"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span class="ico ico-ac">&#9888;</span><div class="cd-l" style="color:var(--ac);margin:0">better-rm — 安全刪除</div></div><p>Agent 刪檔案時移到垃圾桶，不會真刪。誤刪可以救回來。</p></div>
+    <div class="cd"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span class="ico ico-p">&#8962;</span><div class="cd-l" style="color:var(--p);margin:0">資料夾位置</div></div><p>推薦放 <strong>iCloud</strong>：多裝置同步 + 自動備份。<br>或 Documents：單機穩定。</p></div>
+  </div>
+</div>
+
+<!-- ========== 02 AI Agent 能做什麼 ========== -->
+<div class="slide" data-s="2" data-notes="不是教他 AI Agent 是什麼。是講現在能做到什麼程度，以及品質好不好取決於什麼。">
+  <span class="tag tag-y"><span class="tag-i">&#9881;</span> 現況</span>
+  <h2>AI Agent 現在能做什麼</h2>
+  <div class="g2">
+    <div class="cd"><div class="cd-i">&#9998;</div><div class="cd-l" style="color:var(--g)">能做到</div><p>讀寫檔案、跑程式、搜尋資料、串接工具、生成內容、分析資料、管理專案</p></div>
+    <div class="cd"><div class="cd-i">&#10060;</div><div class="cd-l" style="color:var(--r)">限制</div><p>會幻覺（編造數字）、長對話品質衰退、沒有真正的記憶、不會自己判斷該不該做</p></div>
+  </div>
+  <div class="wb">
+    <p><strong>品質好不好，90% 取決於框架設計。</strong><br>同一個模型，沒框架 = 通用回答。有框架 = 像用了三個月的夥伴。今天要建的就是這個框架。</p>
+  </div>
+</div>
+
+<!-- ========== 03 不是工具是夥伴 ========== -->
+<div class="slide" data-s="3" data-notes="Vault for Founders 的 framing。">
+  <span class="tag tag-y"><span class="tag-i">&#9733;</span> 心智模型</span>
+  <h2>你要建的不是工具，是夥伴</h2>
+  <div class="vs">
+    <div class="vs-l"><div class="cd-l">工具</div><p>每次重新解釋背景。換話題從頭來。關掉全忘。你遷就它。</p></div>
+    <div class="vs-m">vs</div>
+    <div class="vs-r"><div class="cd-l">夥伴</div><p>知道你的公司、思考方式、上次的決定。你只說新的事。它遷就你。</p></div>
+  </div>
+  <div class="ib"><p>今天建的不是設定好就不動的系統。是一個<strong>活的、會跟著你進化的夥伴。</strong></p></div>
+</div>
+
+<!-- ========== 04 Context Window ========== -->
+<div class="slide" data-s="4" data-notes="核心概念。講慢。這是所有設計決策的底層邏輯。">
+  <span class="tag tag-k"><span class="tag-i">&#9733;</span> 底層邏輯</span>
+  <h2>Context Window — AI 的工作記憶</h2>
+  <div class="row">
+    <div>
+      <p>每次對話有一個「工作記憶」上限。</p>
+      <p>就算有 100 萬 token，<strong>塞越滿越笨</strong>。關鍵資訊被雜訊淹沒。</p>
+      <h3>Context 污染</h3>
+      <p>塞不相關的東西 = 稀釋 AI 注意力。像開會時旁邊有人一直講無關的事。</p>
+    </div>
+    <div>
+      <div class="cd" style="background:var(--s2)">
+        <div class="cd-i">&#9888;</div>
+        <div class="cd-l" style="color:var(--y)">塞滿的後果</div>
+        <p>回答變泛、忘記前面說的、開始幻覺、語氣變奇怪、重複自己</p>
+      </div>
+    </div>
+  </div>
+  <div class="wb"><p><strong>所有設計都在解決同一個問題：</strong>讓 AI 有限的工作記憶裡，永遠放著最重要的東西。</p></div>
+</div>
+
+<!-- ========== 05 三層設計 ========== -->
+<div class="slide" data-s="5" data-notes="每一層都對應 context 管理策略。">
+  <span class="tag tag-y"><span class="tag-i">&#9881;</span> 架構</span>
+  <h2>三層設計</h2>
+  <div class="row">
+    <div class="circles">
+      <div class="rn r3"><span>自動化</span></div>
+      <div class="rn r2"><span>擴展</span></div>
+      <div class="rn r1"><span>核心</span></div>
+    </div>
+    <div>
+      <h3>核心 — 今天建好</h3>
+      <table style="margin:4px 0">
+        <tr><td><strong>CLAUDE.md</strong></td><td>身份。每次自動載入，精煉佔位。</td></tr>
+        <tr><td><strong>MEMORY.md</strong></td><td>記憶。只載入相關的。</td></tr>
+        <tr><td><strong>進化規則</strong></td><td>寫在 CLAUDE.md 裡。讓它自己變好。</td></tr>
+      </table>
+      <h3>擴展 — 用到時加</h3>
+      <p class="sm">vault/ 按需搜尋 · skills/ 觸發才載 · CLI 零 token 取資料</p>
+      <h3>自動化 — 穩定後開</h3>
+      <p class="sm">排程 · 沉澱 · 事件觸發</p>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 06 Context Best Practice ========== -->
+<div class="slide" data-s="6" data-notes="實戰技巧。Joey 每天會用到。">
+  <span class="tag tag-k"><span class="tag-i">&#9733;</span> 實戰技巧</span>
+  <h2>Context 管理</h2>
+  <div class="g2">
+    <div class="cd"><div class="cd-i">&#8644;</div><div class="cd-l" style="color:var(--ac)">不同任務開不同對話</div><p>寫文案和分析數據不混在一起。上下文互相污染。</p></div>
+    <div class="cd"><div class="cd-i">&#9998;</div><div class="cd-l" style="color:var(--b)">兩段式工作法</div><p>第一輪討論 → 產出文件。<br>第二輪拿文件當指令執行。</p></div>
+  </div>
+  <div class="g2">
+    <div class="cd"><div class="cd-i">&#8986;</div><div class="cd-l" style="color:var(--g)">長對話會衰退</div><p>聊越久品質越差。重要任務開新對話帶上 CLAUDE.md 重新開始。</p></div>
+    <div class="cd"><div class="cd-i">&#9998;</div><div class="cd-l" style="color:var(--p)">Agent-centric 寫法</div><p>寫給 AI 讀：結構清晰、規則明確、不要客氣話。CLAUDE.md 精煉。</p></div>
+  </div>
+  <div class="g2">
+    <div class="cd"><div class="cd-i">&#8634;</div><div class="cd-l" style="color:var(--y)">Checkpoint 可回滾</div><p>做錯隨時退回上一步。放心讓它嘗試。</p></div>
+    <div class="cd"><div class="cd-i">&#128274;</div><div class="cd-l" style="color:var(--r)">.env 不要貼</div><p>API key、密碼、token 不要直接貼進對話。</p></div>
+  </div>
+</div>
+
+<!-- ========== 07 不做的後果 ========== -->
+<div class="slide" data-s="7" data-notes="Vault 的教法：用後果說明為什麼。">
+  <span class="tag tag-y"><span class="tag-i">&#9888;</span> 為什麼</span>
+  <h2>不做的後果</h2>
+  <table>
+    <tr><th>如果不建...</th><th>會怎樣</th></tr>
+    <tr><td><strong>CLAUDE.md</strong></td><td>每次都重新解釋你是誰。token 一半花在重複背景。</td></tr>
+    <tr><td><strong>MEMORY.md</strong></td><td>上週討論三小時的策略，今天全忘了。永遠原地打轉。</td></tr>
+    <tr><td><strong>進化規則</strong></td><td>用三個月還跟第一天一樣。教過的不會保留。</td></tr>
+    <tr><td><strong>vault/</strong></td><td>你的文件、會議紀錄都用不上。只靠訓練資料回答。</td></tr>
+    <tr><td><strong>Git 備份</strong></td><td>CLAUDE.md 改壞沒法回滾。換電腦一切從零。</td></tr>
+  </table>
+</div>
+
+<!-- ========== 08 Claude Code + CLI vs MCP ========== -->
+<div class="slide" data-s="8" data-notes="為什麼選 Claude Code CLI。">
+  <span class="tag tag-y"><span class="tag-i">&#9881;</span> 工具</span>
+  <h2>為什麼是 Claude Code CLI</h2>
+  <p>Claude Code 是唯一能<strong>直接跑 CLI 指令</strong>的介面。Chat 和 Cowork 做不到。</p>
+  <table>
+    <tr><th></th><th>CLI</th><th>MCP</th></tr>
+    <tr><td><strong>本質</strong></td><td>程式直接執行，結果給 AI</td><td>AI 透過協議呼叫外部服務</td></tr>
+    <tr><td><strong>Token</strong></td><td>零。程式跑完只餵結果</td><td>每次呼叫消耗 token</td></tr>
+    <tr><td><strong>上手</strong></td><td>一行指令</td><td>裝 server + 寫設定</td></tr>
+    <tr><td><strong>透明</strong></td><td>看得到在幹嘛</td><td>黑盒</td></tr>
+    <tr><td><strong>維護</strong></td><td>零</td><td>server 要更新</td></tr>
+  </table>
+  <div class="wb"><p><strong>CLI 先行，MCP 備用。</strong>兩者不衝突，但 CLI 能做的事不需要 MCP。</p></div>
+</div>
+
+<!-- ========== 09 安裝包結構 ========== -->
+<div class="slide" data-s="9" data-notes="展示我們的設計。每一層對應 context 策略。">
+  <span class="tag tag-do"><span class="tag-i">&#128193;</span> 我們的設計</span>
+  <h2>安裝包結構</h2>
+  <div class="tree"><span class="hi">[你取的名字]/</span>
+├── CLAUDE.md          <span class="c">← 身份（每次自動載入，精煉）</span>
+├── MEMORY.md          <span class="c">← 記憶（只載入相關的）</span>
+├── vault/             <span class="c">← 知識庫（按需搜尋，不預載）</span>
+│   ├── company/       <span class="c">   策略、產品</span>
+│   ├── industry/      <span class="c">   產業觀察</span>
+│   ├── meetings/      <span class="c">   會議紀錄</span>
+│   └── personal/      <span class="c">   個人思考</span>
+├── skills/            <span class="c">← 專長（觸發時才載入）</span>
+│   └── git-sync/      <span class="c">   /commit 快速備份</span>
+├── routines/          <span class="c">← 排程（穩定後開）</span>
+├── guides/            <span class="c">← 引導 prompt（建造用）</span>
+├── tools/             <span class="c">← 程式工具（零 token）</span>
+├── milestones/        <span class="c">← 進度追蹤</span>
+└── references/        <span class="c">← Agent 搜深入問題</span></div>
+  <div class="wb"><p>什麼時候載入、載入多少、誰來處理 — <strong>都是設計過的。</strong></p></div>
+</div>
+
+<!-- ========== PART 2：建造 ========== -->
+
+<!-- ========== 10 認證 ========== -->
+<div class="slide" data-s="10" data-notes="Homebrew 應該裝好了。裝工具 + 認證。">
+  <span class="tag tag-do"><span class="tag-i">&#9881;</span> 安裝</span>
+  <h2>裝工具 + 認證</h2>
+  <div class="code"><span class="c"># 裝工具</span>
+brew install gh
+brew install googleworkspace-cli
+curl -sSL https://raw.githubusercontent.com/doggy8088/better-rm/main/install.sh | bash
+source ~/.zshrc
+
+<span class="c"># GitHub 認證</span>
+gh auth login
+
+<span class="c"># Google 認證</span>
+gws auth login -s gmail,calendar,drive
+
+<span class="c"># 驗證</span>
+gws gmail <span class="h">+triage</span>       <span class="c"># 信件摘要 ✓</span>
+gws calendar <span class="h">+agenda</span>    <span class="c"># 今天行程 ✓</span></div>
+</div>
+
+<!-- ========== 11 匯入 ChatGPT ========== -->
+<div class="slide" data-s="11" data-notes="Joey 事先匯出：Settings → Data Controls → Export。">
+  <span class="tag tag-do"><span class="tag-i">&#128229;</span> 匯入</span>
+  <h2>搬 ChatGPT 資料</h2>
+  <p>幾百個對話直接餵 AI = 燒 token + 污染 context。<strong>程式先壓縮，AI 最後讀一次。</strong></p>
+  <div class="fl">
+    <div class="fl-s">匯出 JSON</div><div class="fl-a">&rarr;</div>
+    <div class="fl-s" style="border-color:rgba(74,222,128,.2)">程式解析 <span class="dm xs">0 token</span></div><div class="fl-a">&rarr;</div>
+    <div class="fl-s">統計摘要</div><div class="fl-a">&rarr;</div>
+    <div class="fl-s" style="border-color:rgba(217,119,87,.2)">AI 分類 <span class="dm xs">1 次</span></div>
+  </div>
+  <div class="code">python3 tools/parse-chatgpt-export.py <span class="h">conversations.json</span> -o vault/
+<span class="c"># → 統計總覽 / 使用者輪廓 / 分類 prompt</span>
+<span class="c"># 把 classify-prompt.md 貼給 Agent 做分類</span></div>
+</div>
+
+<!-- ========== 12 Onboarding ========== -->
+<div class="slide" data-s="12" data-notes="最長環節。引導 prompt 結合 ChatGPT user-profile。建完 git init + private repo。Permission mode 設 default 或 acceptEdits。">
+  <span class="tag tag-do"><span class="tag-i">&#9998;</span> 建造</span>
+  <h2>Onboarding → CLAUDE.md</h2>
+  <div class="fl">
+    <div class="fl-s">「跑 onboarding」</div><div class="fl-a">&rarr;</div>
+    <div class="fl-s">回答問題</div><div class="fl-a">&rarr;</div>
+    <div class="fl-s">結合 ChatGPT</div><div class="fl-a">&rarr;</div>
+    <div class="fl-s">CLAUDE.md</div><div class="fl-a">&rarr;</div>
+    <div class="fl-s">git init + push</div>
+  </div>
+  <div class="g2">
+    <div class="cd"><div class="cd-i">&#128100;</div><div class="cd-l" style="color:var(--ac)">你是誰</div><p>角色、公司。決定回答角度。</p></div>
+    <div class="cd"><div class="cd-i">&#129504;</div><div class="cd-l" style="color:var(--b)">你怎麼思考</div><p>決策框架。讓它用你的邏輯。</p></div>
+  </div>
+  <div class="g2">
+    <div class="cd"><div class="cd-i">&#128172;</div><div class="cd-l" style="color:var(--g)">溝通偏好</div><p>設一次，省每次改格式。</p></div>
+    <div class="cd"><div class="cd-i">&#128721;</div><div class="cd-l" style="color:var(--p)">紅線 + 權限</div><p>不幫做決定。Permission mode 先用 default。</p></div>
+  </div>
+</div>
+
+<!-- ========== 13 記憶 + 進化 ========== -->
+<div class="slide" data-s="13" data-notes="聊幾輪。打開 MEMORY.md。加進化規則。">
+  <span class="tag tag-do"><span class="tag-i">&#129504;</span> 建造</span>
+  <h2>記憶 + 進化規則</h2>
+  <div class="row">
+    <div>
+      <h3>MEMORY.md — 透明的記憶</h3>
+      <div class="g2" style="max-width:360px">
+        <div class="cd"><div class="cd-i">&#9989;</div><div class="cd-l" style="color:var(--g)">自動</div><p>正常聊天就累積</p></div>
+        <div class="cd"><div class="cd-i">&#9997;</div><div class="cd-l" style="color:var(--b)">手動</div><p>記住 / 忘掉 / 列出</p></div>
+      </div>
+      <p class="sm">打開就看得到。跟 ChatGPT 黑箱完全不同。</p>
+    </div>
+    <div>
+      <h3>進化規則（加進 CLAUDE.md）</h3>
+      <ul>
+        <li><strong>講 3 次就學會</strong> — 提議建 Skill</li>
+        <li><strong>糾正就記住</strong> — 不再犯</li>
+        <li><strong>只進不退</strong> — 更新前比對新舊</li>
+        <li><strong>你批准才改</strong> — 身份設定你控制</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 14 裝 Skill ========== -->
+<div class="slide" data-s="14" data-notes="挑 2-3 個裝。芒格 + Naval。當場試一個真問題。">
+  <span class="tag tag-do"><span class="tag-i">&#10024;</span> 建造</span>
+  <h2>裝 Skill</h2>
+  <div class="code">cp -r references/nuwa-skill/examples/<span class="h">munger-perspective</span> skills/
+cp -r references/nuwa-skill/examples/<span class="h">naval-perspective</span> skills/
+<span class="c"># 用你真正在想的商業問題問芒格</span></div>
+  <p>裝完後用一個你真正在想的問題試。<strong>一個指令切換思維框架。</strong></p>
+  <div class="gb"><p>最後 <code>/commit</code> — 把今天所有設定備份到 GitHub。</p></div>
+</div>
+
+<!-- ========== PART 3：實戰 ========== -->
+
+<!-- ========== 15 實戰：讀信 ========== -->
+<div class="slide" data-s="15" data-notes="用 Joey 當天真實的信件和行事曆。">
+  <span class="tag tag-dm"><span class="tag-i">&#9889;</span> 實戰</span>
+  <h2>今天最該注意什麼</h2>
+  <div class="code"><span class="s">"讀我今天的信跟行事曆。
+按重要性排，不是按時間排。
+需要準備的會議列出來。"</span></div>
+  <div class="g2">
+    <div class="cd"><div class="cd-i">&#9881;</div><div class="cd-l" style="color:var(--g)">CLI 做</div><p>gws +triage 讀信 / gws +agenda 看行事曆 → 零 token</p></div>
+    <div class="cd"><div class="cd-i">&#129504;</div><div class="cd-l" style="color:var(--ac)">AI 做</div><p>結合 CLAUDE.md 判斷優先順序 → 為你量身排序</p></div>
+  </div>
+  <div class="ib"><p>注意它<strong>怎麼排</strong>。是按「它知道你在意什麼」排的。這就是 CLAUDE.md。</p></div>
+</div>
+
+<!-- ========== 16 實戰：挖 Insight ========== -->
+<div class="slide" data-s="16" data-notes="拿真實文件。切芒格模式 demo Skill。">
+  <span class="tag tag-dm"><span class="tag-i">&#128270;</span> 實戰</span>
+  <h2>整理脈絡 + 挖 Insight</h2>
+  <div class="code"><span class="c"># 你的視角</span>
+<span class="s">"整理這份資料的脈絡，找出我可能沒注意到的。"</span>
+
+<span class="c"># 切芒格模式</span>
+<span class="s">"用芒格的視角看這件事。有什麼認知偏誤？"</span></div>
+  <div class="g2">
+    <div class="cd"><div class="cd-i">&#128100;</div><div class="cd-l" style="color:var(--ac)">你的視角</div><p>Agent 用你的思考框架（CLAUDE.md）整理。</p></div>
+    <div class="cd"><div class="cd-i">&#128218;</div><div class="cd-l" style="color:var(--y)">芒格視角</div><p>逆向思考、跨學科分析、找盲點。</p></div>
+  </div>
+  <div class="wb"><p><strong>兩個視角疊加。</strong>你的框架整理 + 芒格的鏡片挑戰。</p></div>
+</div>
+
+<!-- ========== 17 實戰：起草 ========== -->
+<div class="slide" data-s="17" data-notes="讓 Joey 挑一封今天要回的信。如果不對就糾正。">
+  <span class="tag tag-dm"><span class="tag-i">&#9998;</span> 實戰</span>
+  <h2>用你的方式起草</h2>
+  <div class="code"><span class="s">"幫我針對 [主題] 起草一封回覆。"</span></div>
+  <p>它根據 CLAUDE.md 的溝通偏好來寫。不是 AI 的口吻，是<strong>你的口吻</strong>。</p>
+  <div class="g2">
+    <div class="cd"><div class="cd-i">&#10004;</div><div class="cd-l" style="color:var(--g)">寫得好</div><p>直接用或微調。60% 不用大改的目標。</p></div>
+    <div class="cd"><div class="cd-i">&#128260;</div><div class="cd-l" style="color:var(--ac)">不太對</div><p>「太正式了。」→ 它記住 → 下次不用再說。進化規則運作中。</p></div>
+  </div>
+</div>
+
+<!-- ========== PART 4：帶走 ========== -->
+
+<!-- ========== 18 作業 ========== -->
+<div class="slide" data-s="18" data-notes="唯一規則。">
+  <span class="tag tag-do"><span class="tag-i">&#128640;</span> 作業</span>
+  <h2>這一週：用爆它</h2>
+  <p><strong>唯一規則：本來在做的事，全部先問它。</strong></p>
+  <ul>
+    <li>收到信 → <strong>先讓它讀</strong></li>
+    <li>開完會 → <strong>跟它說剛聊什麼</strong></li>
+    <li>要寫東西 → <strong>讓它先起草</strong></li>
+    <li>做決策前 → <strong>把脈絡丟給它</strong></li>
+    <li>讀到文章 → <strong>丟進 vault/</strong></li>
+    <li>想到什麼 → <strong>直接跟它說</strong></li>
+    <li>做完重要事 → <strong>/commit 備份</strong></li>
+  </ul>
+  <p class="sm"><strong>記得：</strong>不同任務開不同對話。長對話品質會衰退。</p>
+</div>
+
+<!-- ========== 19 驗收 ========== -->
+<div class="slide" data-s="19" data-notes="帶走的參考。">
+  <span class="tag tag-do"><span class="tag-i">&#9745;</span> 驗收</span>
+  <h2>一週後</h2>
+  <p>跟 Agent 說<strong>「跑 review」</strong>。下次上課看結果。</p>
+  <ul class="ck">
+    <li>MEMORY.md 至少 15 條記憶</li>
+    <li>vault/ 至少 5 份文件</li>
+    <li>起草 3+ 內容、整理 3+ 會議</li>
+    <li>gws 至少用 10 次</li>
+    <li>問「你了解我什麼？」準確 10+ 點</li>
+    <li>它寫的 60%+ 不用大改</li>
+    <li>糾正 3+ 次且沒再犯</li>
+    <li>能說出「它最懂我的一件事」</li>
+  </ul>
+</div>
+
+<!-- ========== PART 5：深入 ========== -->
+
+<!-- ========== 20 Skill 的本質 ========== -->
+<div class="slide" data-s="20" data-notes="Skill 是什麼、為什麼需要、怎麼運作。">
+  <span class="tag tag-p"><span class="tag-i">&#128218;</span> 深入</span>
+  <h2>Skill 的本質</h2>
+  <p>Skill = 一份 SKILL.md。<strong>寫給 AI 讀的 SOP。</strong></p>
+  <p>你教過一次怎麼做某件事，不應該每次重新教。Skill 就是那個「教一次就好」。</p>
+  <div class="g3">
+    <div class="cd"><div class="cd-i">&#128196;</div><div class="cd-l" style="color:var(--ac)">觸發條件</div><p>什麼時候啟動</p></div>
+    <div class="cd"><div class="cd-i">&#9881;</div><div class="cd-l" style="color:var(--b)">執行步驟</div><p>做什麼、怎麼做</p></div>
+    <div class="cd"><div class="cd-i">&#9733;</div><div class="cd-l" style="color:var(--g)">品質標準</div><p>好的產出長什麼樣</p></div>
+  </div>
+  <div class="ib"><p><strong>Context 策略：</strong>Skill 不會一直佔 context。只有被觸發時才載入。50 個 Skill 只載用到的那幾個。</p></div>
+</div>
+
+<!-- ========== 21 女媧.skill ========== -->
+<div class="slide" data-s="21" data-notes="展開 nuwa-skill 的設計。">
+  <span class="tag tag-p"><span class="tag-i">&#128293;</span> Skill</span>
+  <h2>女媧.skill — 蒸餾名人思維</h2>
+  <p>輸入一個人名 → 6 個平行 Agent 深度調研 → 提煉思維框架 → 生成可運行的 Skill。</p>
+  <div class="tree"><span class="hi">munger-perspective/</span>           <span class="c">← 成品範例</span>
+├── SKILL.md                     <span class="c">← 芒格思維框架本體</span>
+│   ├── 5 個核心心智模型
+│   ├── 8 條決策啟發式
+│   └── 表達 DNA（語氣、用詞、節奏）
+└── references/                  <span class="c">← 支撐調研</span>
+    ├── 25-biases.md             <span class="c">   25 種心理偏誤</span>
+    └── 深度調研報告.md           <span class="c">   50+ 來源</span></div>
+  <p class="sm">已蒸餾 13 位：芒格、Naval、Jobs、費曼、Musk、Paul Graham、張一鳴、Taleb、Karpathy...</p>
+</div>
+
+<!-- ========== 22 同事.skill ========== -->
+<div class="slide" data-s="22" data-notes="colleague-skill 的設計。">
+  <span class="tag tag-p"><span class="tag-i">&#128101;</span> Skill</span>
+  <h2>同事.skill — 蒸餾真實的人</h2>
+  <p>把真實的人（同事、夥伴、顧問）的思維方式變成 AI Skill。<br>GitHub 上 5000+ 星。證明蒸餾一個人完全可行。</p>
+  <div class="wb"><p>女媧蒸餾的是名人（公開資料多）。同事.skill 蒸餾的是你身邊的人（需要你提供素材）。<br><strong>結合起來 = 名人顧問團 + 你自己的人脈智囊。</strong></p></div>
+</div>
+
+<!-- ========== 23 達爾文.skill ========== -->
+<div class="slide" data-s="23" data-notes="darwin-skill 的自動進化機制。">
+  <span class="tag tag-p"><span class="tag-i">&#128300;</span> Skill</span>
+  <h2>達爾文.skill — Skill 自動進化</h2>
+  <p>靈感來自 Karpathy 的 autoresearch。讓 Skill 自動越來越好。</p>
+  <div class="g3">
+    <div class="cd"><div class="cd-i">&#128200;</div><div class="cd-l" style="color:var(--b)">8 維評估</div><p>多角度評分 Skill 品質</p></div>
+    <div class="cd"><div class="cd-i">&#128274;</div><div class="cd-l" style="color:var(--g)">棘輪機制</div><p>只保留進步。退步回滾。</p></div>
+    <div class="cd"><div class="cd-i">&#128101;</div><div class="cd-l" style="color:var(--p)">雙 Agent 評分</div><p>兩個 AI 獨立評，防偏見</p></div>
+  </div>
+  <div class="ib"><p><strong>你不用手動優化 Skill。</strong>達爾文自動測試、評估、迭代。你的 Skill 會像生物演化一樣，只留下更好的版本。</p></div>
+</div>
+
+<!-- ========== 24 雷蒙的 Skill ========== -->
+<div class="slide" data-s="24" data-notes="展開雷蒙三個 Skill 的資料夾結構對比。">
+  <span class="tag tag-p"><span class="tag-i">&#128193;</span> Skill</span>
+  <h2>雷蒙的 Skill — 三種複雜度</h2>
+  <div class="g3">
+    <div class="cd">
+      <div class="cd-l" style="color:var(--g)">Learning Journal</div>
+      <p>每日 5 題回顧。最精簡。</p>
+      <div class="tree" style="font-size:10px;padding:8px 10px;margin:6px 0">SKILL.md
+README.md</div>
+    </div>
+    <div class="cd">
+      <div class="cd-l" style="color:var(--b)">Landing Page</div>
+      <p>17 題問答 → 生成銷售頁。中等。</p>
+      <div class="tree" style="font-size:10px;padding:8px 10px;margin:6px 0">SKILL.md
+README.md
+references/
+  question-bank.md
+  design-rules.md
+templates/
+  base.html</div>
+    </div>
+    <div class="cd">
+      <div class="cd-l" style="color:var(--ac)">Social Cards</div>
+      <p>文字 → 品牌 IG 圖卡。最重。</p>
+      <div class="tree" style="font-size:10px;padding:8px 10px;margin:6px 0">SKILL.md
+README.md
+assets/
+  blue-dark/  4 templates
+  orange-light/ 4 templates
+scripts/
+  screenshot.mjs</div>
+    </div>
+  </div>
+  <div class="wb"><p><strong>Skill 的複雜度看需求。</strong>簡單的只要一個 SKILL.md。複雜的可以帶 references/、templates/、scripts/。</p></div>
+</div>
+
+<!-- ========== 25 雷蒙的架構 ========== -->
+<div class="slide" data-s="25" data-notes="展開雷蒙的 Agent 資料夾結構。">
+  <span class="tag tag-p"><span class="tag-i">&#128193;</span> 參考架構</span>
+  <h2>雷蒙的 Agent 架構</h2>
+  <div class="tree"><span class="hi">Raymond-Agent/</span>               <span class="c">← iCloud 同步</span>
+├── 000_Agent/                  <span class="c">← 核心設定（symlink 到 .claude/）</span>
+│   ├── CLAUDE.md               <span class="c">   身份 + 規則</span>
+│   ├── skills/                 <span class="c">   可重用 Skill</span>
+│   ├── workflows/              <span class="c">   多步驟工作流</span>
+│   ├── memory/                 <span class="c">   記憶檔案</span>
+│   └── hooks/                  <span class="c">   自動化觸發</span>
+├── pro-kit/                    <span class="c">← 引導式安裝包（雙層結構）</span>
+│   ├── 01-agent-folder-setup
+│   ├── 02-skill-creator
+│   └── ...
+└── docs/                       <span class="c">← 13 篇漸進教學</span></div>
+  <div class="ib"><p><strong>關鍵設計：</strong>把 .claude/ 的東西搬到 iCloud 可同步的路徑，用 symlink 連回去。多機同步不失憶。</p></div>
+</div>
+
+<!-- ========== 26 Vault 的架構 ========== -->
+<div class="slide" data-s="26" data-notes="展開 Vault for Founders 的架構。">
+  <span class="tag tag-p"><span class="tag-i">&#128218;</span> 參考架構</span>
+  <h2>Vault for Founders 架構</h2>
+  <div class="tree"><span class="hi">Your-Vault/</span>                  <span class="c">← Obsidian + Git</span>
+├── README.md                   <span class="c">← Vault 索引（Agent 的入口）</span>
+├── cub-persona.md              <span class="c">← AI 夥伴的人格（不填空，要對話產生）</span>
+├── memory-summary.md           <span class="c">← 長期記憶摘要</span>
+├── identity/                   <span class="c">← 你是誰、決策風格</span>
+├── context/                    <span class="c">← 公司背景、策略</span>
+├── memory/                     <span class="c">← 決策紀錄（時序）</span>
+├── sop/                        <span class="c">← 標準操作流程</span>
+├── projects/                   <span class="c">← 進行中的專案</span>
+├── people/                     <span class="c">← 重要聯絡人</span>
+└── skills/                     <span class="c">← AI 技能</span></div>
+  <div class="ib"><p><strong>關鍵設計：</strong>Agent-centric 寫法。persona 不能填空 template，要跟 AI 對話後產生。跟我們的 onboarding 引導同理。</p></div>
+</div>
+
+<!-- ========== 27 預覽 ========== -->
+<div class="slide" data-s="27" data-notes="未來方向。">
+  <span class="tag tag-y"><span class="tag-i">&#128640;</span> 預覽</span>
+  <h2>未來會長出什麼</h2>
+  <table>
+    <tr><th>當你...</th><th>系統會...</th></tr>
+    <tr><td>丟文件進 vault/</td><td>知識庫長大</td></tr>
+    <tr><td>同一件事講 3 次</td><td>提議建 Skill</td></tr>
+    <tr><td>想讓它主動跑</td><td>開 Routine（每日晨報）</td></tr>
+    <tr><td>穩定用兩週</td><td>開沉澱機制（每週回顧）</td></tr>
+    <tr><td>想讓它做小工具</td><td>Vibe Coding</td></tr>
+    <tr><td>想跨裝置用</td><td>iCloud 同步 + GitHub 備份</td></tr>
+  </table>
+</div>
+
+<!-- ========== 28 結語 ========== -->
+<div class="slide slide-c" data-s="28">
+  <div class="big">最好的 AI 夥伴<br>不是最聰明的<br>是<span class="ac">最懂你的</span></div>
+</div>
+
+</div>
+
+<div class="hud">
+  <span class="hud-n" id="ct">1 / 29</span>
+  <div class="hud-bw"><div class="hud-b" id="bar"></div></div>
+  <div class="hud-k"><span>&larr;</span><span>&rarr;</span> <span>Space</span> <span>F</span> 全螢幕 <span>N</span> 筆記</div>
+</div>
+<div class="pn" id="pn"></div>
+
+<script>
+const S=document.querySelectorAll('.slide'),T=S.length;let C=0,NO=false;
+function go(n){if(n<0||n>=T)return;S[C].classList.remove('active');C=n;S[C].classList.add('active');document.getElementById('ct').textContent=(C+1)+' / '+T;document.getElementById('bar').style.width=((C+1)/T*100)+'%';document.getElementById('pn').textContent=S[C].dataset.notes||'';}
+go(0);
+document.addEventListener('keydown',e=>{const k=e.key;
+if(k==='ArrowRight'||k===' '||k==='PageDown'||k==='l'||k==='j'||k==='ArrowDown'){e.preventDefault();go(C+1)}
+else if(k==='ArrowLeft'||k==='Backspace'||k==='PageUp'||k==='h'||k==='k'||k==='ArrowUp'){e.preventDefault();go(C-1)}
+else if(k==='Home'){e.preventDefault();go(0)}else if(k==='End'){e.preventDefault();go(T-1)}
+else if(k==='f'||k==='F'){!document.fullscreenElement?document.documentElement.requestFullscreen():document.exitFullscreen()}
+else if(k==='n'||k==='N'){NO=!NO;document.getElementById('pn').classList.toggle('show',NO)}
+else if(k>='1'&&k<='9')go(parseInt(k)-1);else if(k==='0')go(9);});
+let tx=0;document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX});
+document.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-tx;if(d<-50)go(C+1);if(d>50)go(C-1)});
+document.addEventListener('click',e=>{if(e.target.closest('.hud,.pn'))return;if(e.clientX>innerWidth*.6)go(C+1);else if(e.clientX<innerWidth*.4)go(C-1)});
+</script>
+</body>
+</html>

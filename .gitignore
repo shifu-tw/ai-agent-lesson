@@ -1,0 +1,20 @@
+.env
+*.key
+*.pem
+.DS_Store
+node_modules/
+__pycache__/
+
+# References — 太大，用連結參考就好
+references/Vault-for-Founders/
+references/claude-code-mini-course/
+references/colleague-skill/
+references/darwin-skill/
+references/gws-cli/
+references/hermes-agent/
+references/nuwa-skill/
+references/openclaw/
+references/qmd/
+references/claude-code-docs/
+references/AI Agent 工作術.txt
+references/karpathy-llm-wiki.md
