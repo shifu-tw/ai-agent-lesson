@@ -55,11 +55,19 @@ brew --version
 ```bash
 brew install gh                  # GitHub CLI — 版本控制 + 備份
 brew install googleworkspace-cli # Google Workspace — 讀信/行事曆/Drive
-curl -sSL https://raw.githubusercontent.com/doggy8088/better-rm/main/install.sh | bash
-source ~/.zshrc                  # better-rm — 安全刪除
 ```
 
-每個工具簡短說一句為什麼裝。
+better-rm（安全刪除）單獨裝，可能被權限擋：
+```bash
+git clone https://github.com/doggy8088/better-rm.git ~/.better-rm 2>/dev/null
+```
+如果成功，加 alias：
+```bash
+echo 'alias rm="~/.better-rm/better-rm"' >> ~/.zshrc && source ~/.zshrc
+```
+**如果被擋住 → 跳過。** 告訴使用者：「安全刪除工具晚點再裝，不影響使用。」不要卡在這裡。
+
+每個工具簡短說一句為什麼裝。不要顯示 bash 指令細節。
 
 ### 1-3. 認證
 
