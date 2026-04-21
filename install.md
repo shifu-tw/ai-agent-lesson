@@ -114,41 +114,59 @@ question: "這個資料夾叫什麼名字？"
 （開放題）
 ```
 
-### 2-3. 建結構
+### 2-3. 拉模板 + 建結構
+
+先從 GitHub 拉模板到暫存區（不要告訴使用者技術細節）：
+
+```bash
+REPO_TMP="/tmp/ai-agent-lesson"
+rm -rf "$REPO_TMP"
+git clone https://github.com/shifu-tw/ai-agent-lesson.git "$REPO_TMP" 2>/dev/null
+```
+
+建資料夾結構：
 
 ```bash
 BASE="[選的路徑]/[名字]"
-mkdir -p "$BASE"/{vault/{identity,context,company,industry,meetings,people,personal},skills,guides,tools,milestones}
+mkdir -p "$BASE"/{vault/{identity,context,company,industry,meetings,people,personal},skills,guides,tools,milestones,references,routines}
+```
 
-# 複製 Skills
-cp -r [模板路徑]/skills/insight-finder "$BASE/skills/"
-cp -r [模板路徑]/skills/content-drafter "$BASE/skills/"
-cp -r [模板路徑]/skills/git-sync "$BASE/skills/"
+從模板複製檔案：
 
-# 複製工具
-cp [模板路徑]/tools/parse-chatgpt-export.py "$BASE/tools/"
+```bash
+# Skills
+cp -r "$REPO_TMP/skills/insight-finder" "$BASE/skills/"
+cp -r "$REPO_TMP/skills/content-drafter" "$BASE/skills/"
+cp -r "$REPO_TMP/skills/git-sync" "$BASE/skills/"
 
-# 複製 Phase 2/3 引導
-cp [模板路徑]/guides/10-after-action.md "$BASE/guides/"
-cp [模板路徑]/guides/11-soul-layer.md "$BASE/guides/"
-cp [模板路徑]/guides/12-memory-summary.md "$BASE/guides/"
-cp [模板路徑]/guides/13-voice-and-tone.md "$BASE/guides/"
-cp [模板路徑]/guides/14-update-identity.md "$BASE/guides/"
-cp [模板路徑]/guides/20-routines.md "$BASE/guides/"
-cp [模板路徑]/guides/21-vault-audit.md "$BASE/guides/"
+# 工具
+cp "$REPO_TMP/tools/parse-chatgpt-export.py" "$BASE/tools/"
 
-# 複製 milestones
-cp [模板路徑]/milestones/week-1.md "$BASE/milestones/"
-cp [模板路徑]/milestones/review-template.md "$BASE/milestones/"
+# Phase 2/3 引導
+cp "$REPO_TMP/guides/10-after-action.md" "$BASE/guides/"
+cp "$REPO_TMP/guides/11-soul-layer.md" "$BASE/guides/"
+cp "$REPO_TMP/guides/12-memory-summary.md" "$BASE/guides/"
+cp "$REPO_TMP/guides/13-voice-and-tone.md" "$BASE/guides/"
+cp "$REPO_TMP/guides/14-update-identity.md" "$BASE/guides/"
+cp "$REPO_TMP/guides/20-routines.md" "$BASE/guides/"
+cp "$REPO_TMP/guides/21-vault-audit.md" "$BASE/guides/"
 
-# 複製 routines 範例
-cp -r [模板路徑]/routines "$BASE/"
+# Milestones
+cp "$REPO_TMP/milestones/week-1.md" "$BASE/milestones/"
+cp "$REPO_TMP/milestones/review-template.md" "$BASE/milestones/"
 
-# 複製 references 索引
-mkdir -p "$BASE/references"
-cp [模板路徑]/references/README.md "$BASE/references/"
+# Routines 範例
+cp "$REPO_TMP/routines/daily-briefing.md" "$BASE/routines/"
+cp "$REPO_TMP/routines/weekly-evolution.md" "$BASE/routines/"
 
-# 建 vault READMEs
+# References 索引
+cp "$REPO_TMP/references/README.md" "$BASE/references/"
+
+# CLAUDE.md 模板（稍後用來生成）
+cp "$REPO_TMP/templates/CLAUDE.md.template" "$BASE/.CLAUDE.md.template"
+
+# 清理暫存
+rm -rf "$REPO_TMP"
 ```
 
 在每個 vault 子資料夾建 README：
