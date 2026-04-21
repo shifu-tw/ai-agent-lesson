@@ -169,15 +169,15 @@ cp "$REPO_TMP/templates/CLAUDE.md.template" "$BASE/.CLAUDE.md.template"
 rm -rf "$REPO_TMP"
 ```
 
-在每個 vault 子資料夾建 README：
+在每個 vault 子資料夾建 CLAUDE.md（給 Agent 在這個目錄工作時讀，人也能看）：
 
-- **identity/** — 「你的價值觀、決策風格。第一天建。」
-- **context/** — 「公司背景、策略。第一天建。」
-- **company/** — 「公司資料。有了就丟。」
-- **industry/** — 「產業觀察。有了就丟。」
-- **meetings/** — 「會議紀錄。開完會跟我說就好。」
-- **people/** — 「重要聯絡人。人脈複雜時建。」
-- **personal/** — 「個人思考。想到什麼就丟。」
+- **identity/CLAUDE.md** — 「這裡放你的價值觀、決策風格、表達方式。起草內容或分析問題時先讀這裡。第一天建。」
+- **context/CLAUDE.md** — 「這裡放公司背景、產品策略、商業模式。回答公司相關問題前先讀這裡。第一天建。」
+- **company/CLAUDE.md** — 「這裡放公司策略文件、產品規劃、團隊資訊。有了就丟進來。」
+- **industry/CLAUDE.md** — 「這裡放產業觀察、競品分析、市場趨勢。有了就丟進來。」
+- **meetings/CLAUDE.md** — 「這裡放會議紀錄。格式：YYYY-MM-DD-主題.md。開完會跟我說剛聊了什麼，我整理後存這裡。」
+- **people/CLAUDE.md** — 「這裡放重要聯絡人的背景和互動紀錄。提到某人時先查這裡。人脈複雜時才建。」
+- **personal/CLAUDE.md** — 「這裡放個人思考、靈感、筆記。想到什麼就丟進來。」
 
 ### 2-4. cd 進去
 
