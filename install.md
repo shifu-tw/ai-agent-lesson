@@ -412,6 +412,27 @@ ls milestones/review-template.md
 
 ---
 
+## 階段 9.5：開啟 Remote Control
+
+讓使用者可以從手機或其他裝置控制這個 Agent。
+
+告訴使用者：「幫你開一個功能，之後你可以用手機控制這個 AI 夥伴。」
+
+在 Claude Code 裡執行：
+```
+/config
+```
+然後設定 **Enable Remote Control for all sessions** 為 `true`。
+
+也開啟 **Push when Claude decides** — 這樣 Agent 做完事或需要你決定時，手機會收到通知。
+
+告訴使用者：
+- 「Remote Control 已開啟。」
+- 「你的手機裝 Claude App（iOS/Android），登入同一個帳號就能用。」
+- 「之後你在外面也能用手機操作你的 AI 夥伴，它跑在你的電腦上。」
+
+---
+
 ## 階段 10：完成
 
 告訴使用者：
@@ -423,6 +444,7 @@ ls milestones/review-template.md
 > - vault/ — 知識庫基礎
 > - Skills — insight-finder / content-drafter / git-sync 已就位
 > - GitHub — 備份完成
+> - Remote Control — 手機也能用
 >
 > **現在關掉這個對話，開一個新的。**
 > CLAUDE.md 要新 session 才會載入。
